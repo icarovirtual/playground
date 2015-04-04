@@ -1,7 +1,30 @@
 #!/bin/bash
 if [ $# -eq "0" ] || [ $1 == "-h" ]; then
-  echo "help
-  aa"
+  echo \
+"usage: v2wg [-h] [-i infile -o outfile] [-s start] [-d duration] [-t transpose] [-f format]
+where:
+  -h    print this help menu
+  -i    path to the input file
+          e.g.: /Users/me/video.mp4
+  -o    path to the output file, without the extension
+          e.g.: /Users/me/output
+  -s    time in seconds or in the format \"HH:MM:SS.MMMM\" to start the conversion
+          e.g.: -i 15
+                -i 00:05:30.500
+  -d    the duration in seconds of the video to be used in the conversion
+  -t    transposing options, as follows:
+          1 to rotate the video in 90 degrees clockwise
+          2 to rotate the video in   90 degrees anti-clockwise
+          this is usually useful when converting portrait videos
+  -f    The output format. Acceptable types are gif and webm
+
+basic example:
+  v2wg -i /Users/me/video.mp4 -o /Users/me/output
+complete example:
+  v2wg -i /Users/me/video.mp4 -o /Users/me/output -s 15 -d 5 -t 1 -f webm
+
+this process uses the \"ffmpeg\" library with \"libvpx\" and \"libvorbis\" plugins. if any errors occur relating to these requirements, install them with the following command:
+  brew install ffmpeg --with-libvpx --with-libvorbis"
 else
   # Defaults
   START_SECS=0
