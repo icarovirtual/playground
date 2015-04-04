@@ -79,6 +79,6 @@ else
   elif [ -z ${OUTPUT} ]; then
       echo "Please provide the output file location using the -o argument"
   else
-    sudo ffmpeg -ss ${START_SECS} -t ${DURATION} -i ${INPUT} -vf "transpose=${TRANSPOSE}" ${OUTPUT}.${FORMAT}
+    sudo ffmpeg -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -vf "transpose=${TRANSPOSE}" "${OUTPUT}.${FORMAT}"
   fi
 fi
