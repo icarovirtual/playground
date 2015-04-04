@@ -1,7 +1,10 @@
 #!/bin/bash
 if [ $# -eq "0" ] || [ $1 == "-h" ]; then
   echo \
-"usage: v2wg [-h] [-i infile -o outfile] [-s start] [-d duration] [-t transpose] [-f format]
+"v2wg (video to webm and gif) version 1.0 by iraupph
+  convert your video files to .gif or .webm files. provides options to set time limits and transpose (rotate) the video.
+
+usage: v2wg [-h] [-i infile -o outfile] [-s start] [-d duration] [-t transpose] [-f format]
 where:
   -h    print this help menu
   -i    path to the input file
