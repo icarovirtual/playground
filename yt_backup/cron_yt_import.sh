@@ -56,22 +56,19 @@ else
     mkdir -p ${YT_IMPORT_LOCATION}
     touch ${YT_URLS_AND_LOCATIONS}
 
-    crontab -l > $CRON_TEMP # Copy the current contents to a temporary file
+    echo ${YOUTUBE_URL} ${OUTPUT} >> ${YT_URLS_AND_LOCATIONS} # Add the new Youtube URL
 
-    # echo "${SCHEDULE} echo "${YOUTUBE_URL}" >> "${OUTPUT}"/cron.txt" >> $CRON_TEMP
-    # echo "* * * * * echo "${YOUTUBE_URL}" >> "${OUTPUT}"/cron.txt" >> $CRON_TEMP
-    # Append the new Youtube job to the temporary file
-    # echo "${SCHEDULE} youtube-dl -o "${OUTPUT}%(title)s.%(ext)s" $YOUTUBE_URL --youtube-skip-dash-manifest" >> $CRON_TEMP
-    # echo "* * * * * /usr/local/bin/youtube-dl -o \"${OUTPUT}%(title)s.%(ext)s\" --youtube-skip-dash-manifest "${YOUTUBE_URL}"" >> $CRON_TEMP
+
     if [ ! "$(crontab -l | grep 'cron_yt_process')" == ""  ];then # Search for existent
       echo "cron job was already set up"
     else
+      # Copy the current crontab to a temporary file, append the new job and import everything back again
       echo "cron job is being set up"
-      echo "${SCHEDULE} /Users/buddles/projects/playground/yt_backup/cron_yt_process.sh ${YT_IMPORT_LOCATION}" >> $CRON_TEMP
+      crontab -l > $CRON_TEMP
+      # echo "${SCHEDULE} /Users/buddles/projects/playground/yt_backup/cron_yt_process.sh ${YT_IMPORT_LOCATION} > ${YT_IMPORT_LOCATION}log.txt" >> $CRON_TEMP
+      echo "* * * * * /Users/buddles/projects/playground/yt_backup/cron_yt_process.sh ${YT_IMPORT_LOCATION} > ${YT_IMPORT_LOCATION}log.txt" >> $CRON_TEMP
+      crontab $CRON_TEMP
+      rm $CRON_TEMP
     fi
-
-    crontab $CRON_TEMP # Import everything back again
-
-    rm $CRON_TEMP # Remove the temporary file
   fi
 fi
