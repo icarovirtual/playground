@@ -17,7 +17,7 @@ where:
   -d    the duration in seconds of the video to be used in the conversion
   -t    transposing options, as follows:
           1 to rotate the video in 90 degrees clockwise
-          2 to rotate the video in   90 degrees anti-clockwise
+          2 to rotate the video in 90 degrees anti-clockwise
           this is usually useful when converting portrait videos
   -f    The output format. Acceptable types are gif and webm
 
@@ -33,7 +33,6 @@ else
   START_SECS=0
   DURATION=300 # Nobody will make a webm/gif longer than 5 minutes...
   FORMAT="webm"
-  TRANSPOSE=4
 
   while [[ $# > 1 ]]
   do
@@ -82,6 +81,8 @@ else
   elif [ -z ${OUTPUT} ]; then
       echo "Please provide the output file location using the -o argument"
   else
-    sudo ffmpeg -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -vf "transpose=${TRANSPOSE}" "${OUTPUT}.${FORMAT}"
+    # Transpose is optional and has no default. Use if is provided, otherwise is empty
+    if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
+    sudo ffmpeg -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" ${TRANSPOSE_CMD} "${OUTPUT}.${FORMAT}"
   fi
 fi
