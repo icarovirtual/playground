@@ -21,8 +21,12 @@ else
   mkdir -p "$HOME/bin"
 
   ORIGINAL=$1
+  # This splits in the last `/`, AFAIK, I actually forgot to document this
   FILE_NAME="${ORIGINAL##*/}"
 
+  # Tip to my future self that will reuse this:
+  # Original path is the actual folder (e.g. /local/project/documents/)
+  # Destination path is the parent folder (e.g. /Dropbox/project/)
   sudo ln -s "${ORIGINAL}" "${SCRIPTS_LOCATION}"
   sudo chmod +x "${FILE_NAME}"
 
