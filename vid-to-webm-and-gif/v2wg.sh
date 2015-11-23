@@ -11,14 +11,20 @@ where:
                   e.g.: /Users/me/video.mp4
   -o            path to the output file, without the extension
                   e.g.: /Users/me/output
-  -s            time in seconds or in the format \"HH:MM:SS.MMMM\" to start the conversion
+  -s            time (in the formats \"[-][HH:]MM:SS[.m...]\" or \"[-]S+[.m...]\") to start the conversion
                   e.g.: -i 15
                     -i 00:05:30.500
-  -d            the duration in seconds of the video to be used in the conversion
+                    -i 33.128
+  -d            the duration (in the formats \"[-][HH:]MM:SS[.m...]\" or \"[-]S+[.m...]\") of the video to be used in the conversion
+                  e.g.: -i 15
+                    -i 00:05:30.500
+                    -i 33.128
   -t            transposing options, as follows:
                   1 to rotate the video in 90 degrees clockwise
                   2 to rotate the video in 90 degrees anti-clockwise
                     this argument is usually useful when converting portrait videos
+  -p            size of the output, in the format WIDTHxHEIGHT or using one of the abbreviations:
+                  qvga (320x240), vga (640x480), hd480 (852x480), qhd (960x540), hd720 (1280x720), hd1080 (1920x1080)
   -f            the output format. acceptable types are \"gif\" and \"webm\"
   --no_audio    disable the audio in the output^
 
@@ -27,7 +33,7 @@ where:
 basic example:
   v2wg -i /Users/me/video.mp4 -o /Users/me/output
 complete example:
-  v2wg --no_audio -i /Users/me/video.mp4 -o /Users/me/output -s 15 -d 5 -t 1 -f webm
+  v2wg --no_audio -i /Users/me/video.mp4 -o /Users/me/output -p 320x480 -s 15 -d 5.500 -t 1 -f webm
 
 this process uses the \"ffmpeg\" library with \"libvpx\" and \"libvorbis\" plugins. if any errors occur relating to these requirements, install them with the following command:
   brew install ffmpeg --with-libvpx --with-libvorbis"
@@ -36,6 +42,7 @@ else
   START_SECS=0
   DURATION=300 # Nobody will make a webm/gif longer than 5 minutes...
   FORMAT="webm"
+  SIZE="qhd"
 
   while [[ $# > 1 ]]
   do
@@ -65,6 +72,10 @@ else
           FORMAT="$2"
           shift
           ;;
+          -p)
+          SIZE="$2"
+          shift
+          ;;
           --no_audio)
           NO_AUDIO=TRUE # No shift cuz no value
           ;;
@@ -82,6 +93,7 @@ else
   if [ ! -z ${TRANSPOSE} ];   then echo TRANSPOSE .............. "${TRANSPOSE}"; fi
   if [ ! -z ${NO_AUDIO} ];    then echo NO AUDIO ............... "${NO_AUDIO}"; fi
   if [ ! -z ${FORMAT} ];      then echo OUTPUT FORMAT .......... "${FORMAT}"; fi
+  if [ ! -z ${SIZE} ];        then echo OUTPUT SIZE ............ "${SIZE}"; fi
 
   if [ -z ${INPUT} ]; then
     echo "Please provide the input file location using the -i argument"
@@ -91,6 +103,6 @@ else
     # Transpose is optional and has no default. Use if is provided, otherwise is empty
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${NO_AUDIO} ]; then NO_AUDIO_CMD="-an"; else NO_AUDIO_CMD=""; fi
-    ffmpeg -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" ${TRANSPOSE_CMD} ${NO_AUDIO_CMD} "${OUTPUT}.${FORMAT}"
+    ffmpeg -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${NO_AUDIO_CMD} "${OUTPUT}.${FORMAT}"
   fi
 fi
