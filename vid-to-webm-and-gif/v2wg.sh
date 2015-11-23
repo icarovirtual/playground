@@ -103,6 +103,7 @@ else
     # Transpose is optional and has no default. Use if is provided, otherwise is empty
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${NO_AUDIO} ]; then NO_AUDIO_CMD="-an"; else NO_AUDIO_CMD=""; fi
-    ffmpeg -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${NO_AUDIO_CMD} "${OUTPUT}.${FORMAT}"
+    # -nostats -loglevel 0 make ffmpeg less verbose
+    ffmpeg -nostats -loglevel 0 -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${NO_AUDIO_CMD} "${OUTPUT}.${FORMAT}"
   fi
 fi
