@@ -24,7 +24,7 @@ where:
                   2 to rotate the video in 90 degrees anti-clockwise
                     this argument is usually useful when converting portrait videos
   -p            size of the output, in the format WIDTHxHEIGHT or using one of the abbreviations:
-                  qvga (320x240), vga (640x480), hd480 (852x480), qhd (960x540), hd720 (1280x720), hd1080 (1920x1080)
+                  nhd (640x360), hd480 (852x480), qhd (960x540), hd720 (1280x720), hd1080 (1920x1080)
   -f            the output format. acceptable types are \"gif\" and \"webm\"
   --no_audio    disable the audio in the output^
 
@@ -77,7 +77,7 @@ else
           shift
           ;;
           --no_audio)
-          NO_AUDIO=TRUE # No shift cuz no value
+          NO_AUDIO=YES # No shift cuz no value
           ;;
           *)
           # default
@@ -103,7 +103,7 @@ else
     # Transpose is optional and has no default. Use if is provided, otherwise is empty
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${NO_AUDIO} ]; then NO_AUDIO_CMD="-an"; else NO_AUDIO_CMD=""; fi
-    # -nostats -loglevel 0 make ffmpeg less verbose
-    ffmpeg -nostats -loglevel 0 -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${NO_AUDIO_CMD} "${OUTPUT}.${FORMAT}"
+    #      Show progress but don't show other logs                                                                       These quality settings should be good enough
+    ffmpeg -stats -loglevel 0 -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${NO_AUDIO_CMD} -c:v libvpx -crf 10 -b:v 1M "${OUTPUT}.${FORMAT}"
   fi
 fi
