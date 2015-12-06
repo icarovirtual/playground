@@ -1,15 +1,17 @@
 #!/bin/bash
+
 # TODO:
 # calcular o #~ frames que vai ser processado pegando o fps e a duracao do video
-# habilitar um modo simples que soh passa direto o nome do arquivo
-# deixar como padrao sem audio (inverter o parametro)
 # mostrar e calcular melhor se eh video inteiro, ao inves de generalizar pra 300s
+
 if [ $# -eq "0" ] || [ $1 == "-h" ]; then
   echo \
-"v2wg (video to webm and gif) version 1.0 by iraupph
-  convert your video files to .gif or .webm files. provides options to set time limits and transpose (rotate) the video.
+"v2wg (video to webm and gif) version 1.5 by iraupph
+  convert your video files to .gif or .webm files. provides options to set time limits, resolution, muting and rotation of the video.
 
-usage: v2wg [--no_audio] [-i infile -o outfile] [-s start] [-d duration] [-t transpose] [-f format]
+usage:
+  v2wg infile
+  v2wg [--audio] [-i infile] [-o outfile] [-s start] [-d duration] [-t transpose] [-f format] [-p resolution]
 where:
   -h        print this help menu
   -i        path to the input file
@@ -36,11 +38,11 @@ where:
   ^ use these arguments at the start of the command to avoid problems
 
 basic example:
-  v2wg -i /Users/me/video.mp4 -o /Users/me/output
+  v2wg /Users/me/video.mp4
 complete example:
   v2wg --audio -i /Users/me/video.mp4 -o /Users/me/output -p 320x480 -s 15 -d 5.500 -t 1 -f webm
 
-this process uses the \"ffmpeg\" library with \"libvpx\" and \"libvorbis\" plugins. if any errors occur relating to these requirements, install them with the following command:
+this script uses the \"ffmpeg\" library with \"libvpx\" and \"libvorbis\" plugins. if any errors occur relating to these requirements, install them with the following command:
   brew install ffmpeg --with-libvpx --with-libvorbis"
 else
   # Defaults
@@ -91,6 +93,28 @@ else
       shift
   done
 
+  # Try to parse the file path from the first parameter
+  if [ -z ${INPUT} ]; then
+    INPUT=$1; # Get the file path from parameter
+    OUTPUT="${INPUT%.*}"; # Remove the extension from file path
+  fi
+
+  # Check if the input file exists and abort if it does not
+  if [ ! -f ${INPUT} ]; then
+    echo "Input file \"${INPUT}\" not found!";
+    exit 1;
+  fi
+
+  # Check if the output file exists and prompt for overwriting
+  if [ -f "${OUTPUT}.${FORMAT}" ]; then
+    read -p "Output file \"${OUTPUT}.${FORMAT}\" already exists, overwrite? [y/n] " prompt
+    tput cuu 1 && tput el # Clear the previous line
+    if [[ ! $prompt == "y" && ! $prompt == "Y" && ! $prompt == "yes" && ! $prompt == "Yes" ]]; then
+      echo "Use the -o parameter to specify the output file path"
+      exit 0;
+    fi
+  fi
+
   if [ ! -z ${INPUT} ];       then echo INPUT PATH ............. "${INPUT}"; fi
   if [ ! -z ${OUTPUT} ];      then echo OUTPUT PATH ............ "${OUTPUT}"; fi
   if [ ! -z ${START_SECS} ];  then echo START AT ............... "${START_SECS}" seconds; fi
@@ -109,6 +133,6 @@ else
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${AUDIO} ]; then AUDIO_CMD=""; else AUDIO_CMD="-an"; fi
     #      Show progress but don't show other logs                                                                       These quality settings should be good enough
-    ffmpeg -stats -loglevel 0 -ss ${START_SECS} -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+    ffmpeg -stats -loglevel 0 -ss ${START_SECS} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
   fi
 fi
