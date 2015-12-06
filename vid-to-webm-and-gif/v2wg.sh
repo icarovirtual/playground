@@ -1,12 +1,8 @@
 #!/bin/bash
 
-# TODO:
-# calcular o #~ frames que vai ser processado pegando o fps e a duracao do video
-# mostrar e calcular melhor se eh video inteiro, ao inves de generalizar pra 300s
-
 if [ $# -eq "0" ] || [ $1 == "-h" ]; then
   echo \
-"v2wg (video to webm and gif) version 1.5 by iraupph
+"v2wg (video to webm and gif) version 2.0 by iraupph
   convert your video files to .gif or .webm files. provides options to set time limits, resolution, muting and rotation of the video.
 
 usage:
