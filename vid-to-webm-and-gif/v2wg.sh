@@ -46,8 +46,8 @@ this script uses the \"ffmpeg\" library with \"libvpx\" and \"libvorbis\" plugin
   brew install ffmpeg --with-libvpx --with-libvorbis"
 else
   # Defaults
-  START_SECS=0
-  DURATION=300 # Nobody will make a webm/gif longer than 5 minutes...
+  START="00:00:00.0000"
+  # DURATION=300 # Nobody will make a webm/gif longer than 5 minutes...
   FORMAT="webm"
   SIZE="qhd"
 
@@ -64,7 +64,7 @@ else
           shift
           ;;
           -s)
-          START_SECS="$2"
+          START="$2"
           shift
           ;;
           -d)
@@ -96,6 +96,9 @@ else
   # Try to parse the file path from the first parameter
   if [ -z ${INPUT} ]; then
     INPUT=$1; # Get the file path from parameter
+  fi
+  # Generate a output file name from the input file
+  if [ -z ${OUTPUT} ]; then
     OUTPUT="${INPUT%.*}"; # Remove the extension from file path
   fi
 
@@ -115,14 +118,35 @@ else
     fi
   fi
 
+  if [ -z ${DURATION} ]; then
+    # Get the duration by inspecting the file
+    DURATION=$(ffprobe "${INPUT}" 2>&1 | sed -n "s/.* Duration: \([^,]*\), .*/\1/p")
+  else
+    SECONDS="${DURATION%.*}"
+    MILLIS="0000" # Default millis
+    if [[ $DURATION == *"."* ]]; then
+      MILLIS="${DURATION##*.}"
+    fi
+    SECS_AS_HOURS=$(printf '%02d:%02d:%02d.%02d\n' $(($SECONDS/3600)) $(($SECONDS%3600/60)) $(($SECONDS%60)) $(($MILLIS)))
+    DURATION=${SECS_AS_HOURS}
+  fi
+
+  # Calculate the total frames to be processed
+  HRS=$(echo $DURATION | cut -d":" -f1)
+  MIN=$(echo $DURATION | cut -d":" -f2)
+  SEC=$(echo $DURATION | cut -d":" -f3)
+  FPS=$(ffprobe "${INPUT}" 2>&1 | sed -n "s/.*, \(.*\) tbr.*/\1/p")
+  FRAMES=$(echo "($HRS*3600+$MIN*60+$SEC)*$FPS" | bc | cut -d"." -f1)
+
   if [ ! -z ${INPUT} ];       then echo INPUT PATH ............. "${INPUT}"; fi
   if [ ! -z ${OUTPUT} ];      then echo OUTPUT PATH ............ "${OUTPUT}"; fi
-  if [ ! -z ${START_SECS} ];  then echo START AT ............... "${START_SECS}" seconds; fi
-  if [ ! -z ${DURATION} ];    then echo DURATION ............... "${DURATION}" seconds; fi
+  if [ ! -z ${START} ];       then echo START AT ............... "${START}"; fi
+  if [ ! -z ${DURATION} ];    then echo DURATION ............... "${DURATION}"; fi
   if [ ! -z ${TRANSPOSE} ];   then echo TRANSPOSE .............. "${TRANSPOSE}"; fi
   if [ ! -z ${AUDIO} ];       then echo NO AUDIO ............... "${AUDIO}"; fi
   if [ ! -z ${FORMAT} ];      then echo OUTPUT FORMAT .......... "${FORMAT}"; fi
   if [ ! -z ${SIZE} ];        then echo OUTPUT SIZE ............ "${SIZE}"; fi
+  if [ ! -z ${FRAMES} ];      then echo TOTAL FRAMES ........... "~${FRAMES}"; fi
 
   if [ -z ${INPUT} ]; then
     echo "Please provide the input file location using the -i argument"
@@ -132,7 +156,7 @@ else
     # Transpose is optional and has no default. Use if is provided, otherwise is empty
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${AUDIO} ]; then AUDIO_CMD=""; else AUDIO_CMD="-an"; fi
-    #      Show progress but don't show other logs                                                                       These quality settings should be good enough
-    ffmpeg -stats -loglevel 0 -ss ${START_SECS} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+    #      Show progress but don't show other logs - force output file overwrite                                           These quality settings should be good enough
+    ffmpeg -stats -loglevel 0 -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
   fi
 fi
