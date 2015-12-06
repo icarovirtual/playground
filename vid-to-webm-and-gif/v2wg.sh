@@ -18,11 +18,11 @@ where:
               e.g.: /Users/me/video.mp4
   -o        path to the output file, without the extension
               e.g.: /Users/me/output
-  -s        time (in the formats \"[-][HH:]MM:SS[.m...]\" or \"[-]S+[.m...]\") to start the conversion
+  -s        time (in the formats \"HH:MM:SS[.m...]\" or \"S+[.mmmm]\") to start the conversion
               e.g.: -i 15
                 -i 00:05:30.500
                 -i 33.128
-  -d        the duration (in the formats \"[-][HH:]MM:SS[.m...]\" or \"[-]S+[.m...]\") of the video to be used in the conversion
+  -d        the duration (in the formats \"HH:MM:SS[.m...]\" or \"S+[.mmmm]\") of the video to be used in the conversion
               e.g.: -i 15
                 -i 00:05:30.500
                 -i 33.128
@@ -45,8 +45,25 @@ complete example:
 this script uses the \"ffmpeg\" library with \"libvpx\" and \"libvorbis\" plugins. if any errors occur relating to these requirements, install them with the following command:
   brew install ffmpeg --with-libvpx --with-libvorbis"
 else
+  # Convert seconds to HH:MM:SS.mmmm
+  function secs_to_hours_f () {
+    # If it's (barely) already in the expected format just return it
+    if [[ $1 == *":"*":"*":"* ]]; then
+      echo $1
+    else
+      SECONDS="${1%.*}" # Get only the seconds (without the millis)
+      MILLIS="0000" # Default millis
+      if [[ $1 == *"."* ]]; then
+        # If there is millis
+        MILLIS="${1##*.}"
+      fi
+      SECS_AS_HOURS=$(printf '%02d:%02d:%02d.%-04s' $(($SECONDS/3600)) $(($SECONDS%3600/60)) $(($SECONDS%60)) $MILLIS)
+      echo ${SECS_AS_HOURS}
+    fi
+  }
+
   # Defaults
-  START="00:00:00.0000"
+  START="0"
   # DURATION=300 # Nobody will make a webm/gif longer than 5 minutes...
   FORMAT="webm"
   SIZE="qhd"
@@ -122,14 +139,9 @@ else
     # Get the duration by inspecting the file
     DURATION=$(ffprobe "${INPUT}" 2>&1 | sed -n "s/.* Duration: \([^,]*\), .*/\1/p")
   else
-    SECONDS="${DURATION%.*}"
-    MILLIS="0000" # Default millis
-    if [[ $DURATION == *"."* ]]; then
-      MILLIS="${DURATION##*.}"
-    fi
-    SECS_AS_HOURS=$(printf '%02d:%02d:%02d.%02d\n' $(($SECONDS/3600)) $(($SECONDS%3600/60)) $(($SECONDS%60)) $(($MILLIS)))
-    DURATION=${SECS_AS_HOURS}
+    DURATION=$(secs_to_hours_f ${DURATION})
   fi
+  START=$(secs_to_hours_f ${START})
 
   # Calculate the total frames to be processed
   HRS=$(echo $DURATION | cut -d":" -f1)
@@ -157,6 +169,6 @@ else
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${AUDIO} ]; then AUDIO_CMD=""; else AUDIO_CMD="-an"; fi
     #      Show progress but don't show other logs - force output file overwrite                                           These quality settings should be good enough
-    ffmpeg -stats -loglevel 0 -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+    ffmpeg -stats -loglevel "error" -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
   fi
 fi
