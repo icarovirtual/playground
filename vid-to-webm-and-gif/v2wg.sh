@@ -60,7 +60,6 @@ else
 
   # Defaults
   START="0"
-  # DURATION=300 # Nobody will make a webm/gif longer than 5 minutes...
   FORMAT="webm"
   SIZE="qhd"
 
@@ -147,12 +146,11 @@ else
   FRAMES=$(echo "($HRS*3600+$MIN*60+$SEC)*$FPS" | bc | cut -d"." -f1)
 
   if [ ! -z ${INPUT} ];       then echo INPUT PATH ............. "${INPUT}"; fi
-  if [ ! -z ${OUTPUT} ];      then echo OUTPUT PATH ............ "${OUTPUT}"; fi
+  if [ ! -z ${OUTPUT} ];      then echo OUTPUT PATH ............ "${OUTPUT}.${FORMAT}"; fi
   if [ ! -z ${START} ];       then echo START AT ............... "${START}"; fi
   if [ ! -z ${DURATION} ];    then echo DURATION ............... "${DURATION}"; fi
   if [ ! -z ${TRANSPOSE} ];   then echo TRANSPOSE .............. "${TRANSPOSE}"; fi
   if [ ! -z ${AUDIO} ];       then echo NO AUDIO ............... "${AUDIO}"; fi
-  if [ ! -z ${FORMAT} ];      then echo OUTPUT FORMAT .......... "${FORMAT}"; fi
   if [ ! -z ${SIZE} ];        then echo OUTPUT SIZE ............ "${SIZE}"; fi
   if [ ! -z ${FRAMES} ];      then echo TOTAL FRAMES ........... "~${FRAMES}"; fi
 
