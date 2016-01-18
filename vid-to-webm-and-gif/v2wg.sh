@@ -162,7 +162,8 @@ else
     # Transpose is optional and has no default. Use if is provided, otherwise is empty
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${AUDIO} ]; then AUDIO_CMD=""; else AUDIO_CMD="-an"; fi
+    if [ ${FORMAT} == "gif" ]; then AUDIO_SETTINGS="" ; else AUDIO_SETTINGS="-c:v libvpx" ; fi  # GIFs can't have audio settings
     #      Show progress but don't show other logs - force output file overwrite                                           These quality settings should be good enough
-    ffmpeg -stats -loglevel "error" -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+    ffmpeg -stats -loglevel "error" -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} ${AUDIO_CMD} -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
   fi
 fi
