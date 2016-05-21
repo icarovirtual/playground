@@ -27,8 +27,11 @@ where:
               2 to rotate the video in 90 degrees anti-clockwise
                 this argument is usually useful when converting portrait videos
   -p        size of the output, in the format WIDTHxHEIGHT or using one of the abbreviations:
-              nhd (640x360), hd480 (852x480), qhd (960x540), hd720 (1280x720), hd1080 (1920x1080)
-  -f        the output format. acceptable types are \"gif\" and \"webm\"
+              nhd (640x360), hd480 (852x480), qhd (960x540, default), hd720 (1280x720), hd1080 (1920x1080)
+  -f        the output format. acceptable types are \"mp4\" (default), \"webm\" and \"gif\"
+  -b        bitrate of the output video, default is 2500k
+              e.g.: -b 1000k
+                -b 3000k
   --audio   enable the audio in the output^
 
   ^ use these arguments at the start of the command to avoid problems
@@ -36,7 +39,7 @@ where:
 basic example:
   v2wg /Users/me/video.mp4
 complete example:
-  v2wg --audio -i /Users/me/video.mp4 -o /Users/me/output -p 320x480 -s 15 -d 5.500 -t 1 -f webm
+  v2wg --audio -i /Users/me/video.mp4 -o /Users/me/output -p 320x480 -s 15 -d 5.500 -t 1 -f webm -b 1000k
 
 this script uses the \"ffmpeg\" library with \"libvpx\" and \"libvorbis\" plugins. if any errors occur relating to these requirements, install them with the following command:
   brew install ffmpeg --with-libvpx --with-libvorbis"
@@ -60,8 +63,9 @@ else
 
   # Defaults
   START="0"
-  FORMAT="webm"
+  FORMAT="mp4"
   SIZE="qhd"
+  BITRATE="2500k"
 
   while [[ $# > 1 ]]
   do
@@ -95,6 +99,10 @@ else
           SIZE="$2"
           shift
           ;;
+          -b)
+          BITRATE="$2"
+          shift
+          ;;
           --audio)
           AUDIO=YES # No shift cuz no value
           ;;
@@ -106,16 +114,16 @@ else
   done
 
   # Try to parse the file path from the first parameter
-  if [ -z ${INPUT} ]; then
+  if [[ -z ${INPUT} ]]; then
     INPUT=$1; # Get the file path from parameter
   fi
   # Generate a output file name from the input file
-  if [ -z ${OUTPUT} ]; then
-    OUTPUT="${INPUT%.*}"; # Remove the extension from file path
+  if [[ -z ${OUTPUT} ]]; then
+    OUTPUT="${INPUT%.*}_"; # Remove the extension from file path
   fi
 
   # Check if the input file exists and abort if it does not
-  if [ ! -f ${INPUT} ]; then
+  if [[ ! -f ${INPUT} ]]; then
     echo "Input file \"${INPUT}\" not found!";
     exit 1;
   fi
@@ -145,16 +153,17 @@ else
   FPS=$(ffprobe "${INPUT}" 2>&1 | sed -n "s/.*, \(.*\) tbr.*/\1/p")
   FRAMES=$(echo "($HRS*3600+$MIN*60+$SEC)*$FPS" | bc | cut -d"." -f1)
 
-  if [ ! -z ${INPUT} ];       then echo INPUT PATH ............. "${INPUT}"; fi
-  if [ ! -z ${OUTPUT} ];      then echo OUTPUT PATH ............ "${OUTPUT}.${FORMAT}"; fi
+  if [[ ! -z ${INPUT} ]];     then echo INPUT PATH ............. "${INPUT}"; fi
+  if [[ ! -z ${OUTPUT} ]];    then echo OUTPUT PATH ............ "${OUTPUT}.${FORMAT}"; fi
   if [ ! -z ${START} ];       then echo START AT ............... "${START}"; fi
   if [ ! -z ${DURATION} ];    then echo DURATION ............... "${DURATION}"; fi
   if [ ! -z ${TRANSPOSE} ];   then echo TRANSPOSE .............. "${TRANSPOSE}"; fi
-  if [ ! -z ${AUDIO} ];       then echo NO AUDIO ............... "${AUDIO}"; fi
+  if [ ! -z ${BITRATE} ];     then echo BITRATE ................ "${BITRATE}"; fi
+  if [ ! -z ${AUDIO} ];       then echo AUDIO .................. "${AUDIO}"; fi
   if [ ! -z ${SIZE} ];        then echo OUTPUT SIZE ............ "${SIZE}"; fi
-  if [ ! -z ${FRAMES} ];      then echo TOTAL FRAMES ........... "~${FRAMES}"; fi
+  if [ ! -z ${FRAMES} ];      then echo TOTAL FRAMES ........... "${FRAMES}"; fi
 
-  if [ -z ${INPUT} ]; then
+  if [[ -z ${INPUT} ]]; then
     echo "Please provide the input file location using the -i argument"
   elif [ -z ${OUTPUT} ]; then
     echo "Please provide the output file location using the -o argument"
@@ -162,8 +171,8 @@ else
     # Transpose is optional and has no default. Use if is provided, otherwise is empty
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${AUDIO} ]; then AUDIO_CMD=""; else AUDIO_CMD="-an"; fi
-    if [ ${FORMAT} == "gif" ]; then AUDIO_SETTINGS="" ; else AUDIO_SETTINGS="-c:v libvpx" ; fi  # GIFs can't have audio settings
-    #      Show progress but don't show other logs - force output file overwrite                                           These quality settings should be good enough
-    ffmpeg -stats -loglevel "error" -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} ${AUDIO_CMD} -b:v 3500k -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+    if [ ${FORMAT} == "gif"  ] || [ -z ${AUDIO} ]; then AUDIO_SETTINGS="" ; else AUDIO_SETTINGS="-c:v libvpx" ; fi  # GIFs can't have audio settings
+    #      Show progress but don't show other logs - force output file overwrite                                           These quality settings should be good enough, TODO: parameters for them
+    ffmpeg -stats -loglevel "error" -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} ${AUDIO_SETTINGS} -b:v "${BITRATE}" -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
   fi
 fi
