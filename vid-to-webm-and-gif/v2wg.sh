@@ -173,14 +173,15 @@ else
     if [ ! -z ${AUDIO} ]; then AUDIO_CMD=""; else AUDIO_CMD="-an"; fi
     #              Show progress but don't show other logs, force output file overwrite
     FFMPEG="ffmpeg -stats -loglevel error -ss ${START} -y -t ${DURATION} -i ${INPUT}"
-    if [ ${FORMAT} == "gif"  ] || [ -z ${AUDIO} ]; then
-        SIZE_X=$(echo $SIZE | cut -d"x" -f1) # scale x:-1 keeps the same aspect ratio
+    if [ -z ${AUDIO} ]; then AUDIO_SETTINGS="" ; else AUDIO_SETTINGS="-c:v libvpx" ; fi
+    if [ ${FORMAT} == "gif"  ]; then
+        SIZE_WIDTH=$(echo $SIZE | cut -d"x" -f1) # scale x:-1 keeps the same aspect ratio
         # GIF quality optimization from http://blog.pkh.me/p/21-high-quality-gif-with-ffmpeg.html
-        ffmpeg -loglevel "error" -i "$INPUT" -vf "fps=15,scale=${SIZE_X}:-1:flags=lanczos,palettegen" -y /tmp/palette.png
-        ${FFMPEG} -i /tmp/palette.png ${TRANSPOSE_CMD} -lavfi "fps=15,scale=${SIZE_X}:-1:flags=lanczos [x]; [x][1:v] paletteuse" "${OUTPUT}.${FORMAT}"
+        ffmpeg -loglevel "error" -i "$INPUT" -vf "fps=15,scale=${SIZE_WIDTH}:-1:flags=lanczos,palettegen" -y /tmp/palette.png
+        ${FFMPEG} -i /tmp/palette.png ${TRANSPOSE_CMD} -lavfi "fps=15,scale=${SIZE_WIDTH}:-1:flags=lanczos [x]; [x][1:v] paletteuse" "${OUTPUT}.${FORMAT}"
     else
-#                                                           These quality settings should be good enough for video, TODO: parameters for them
-        ${FFMPEG}-s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v "${BITRATE}" -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+        #                                                       These quality settings should be good enough for video, TODO: parameters for them
+        ${FFMPEG} -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} ${AUDIO_SETTINGS} -b:v "${BITRATE}" -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
     fi
   fi
 fi
