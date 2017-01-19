@@ -130,9 +130,9 @@ else
 
   # Check if the output file exists and prompt for overwriting
   if [ -f "${OUTPUT}.${FORMAT}" ]; then
-    read -p "Output file \"${OUTPUT}.${FORMAT}\" already exists, overwrite? [y/n] " prompt
+    read -p "Output file \"${OUTPUT}.${FORMAT}\" already exists, overwrite? [y]/n " prompt
     tput cuu 1 && tput el # Clear the previous line
-    if [[ ! $prompt == "y" && ! $prompt == "Y" && ! $prompt == "yes" && ! $prompt == "Yes" ]]; then
+    if [[ ! $prompt == "y" && ! $prompt == "Y" && ! $prompt == "yes" && ! $prompt == "Yes" && ! $prompt == "" ]]; then
       echo "Use the -o parameter to specify the output file path"
       exit 0;
     fi
