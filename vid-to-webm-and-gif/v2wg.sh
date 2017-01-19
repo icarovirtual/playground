@@ -171,8 +171,16 @@ else
     # Transpose is optional and has no default. Use if is provided, otherwise is empty
     if [ ! -z ${TRANSPOSE} ]; then TRANSPOSE_CMD="-vf transpose=${TRANSPOSE}"; else TRANSPOSE_CMD=""; fi
     if [ ! -z ${AUDIO} ]; then AUDIO_CMD=""; else AUDIO_CMD="-an"; fi
-    if [ ${FORMAT} == "gif"  ] || [ -z ${AUDIO} ]; then AUDIO_SETTINGS="" ; else AUDIO_SETTINGS="-c:v libvpx" ; fi  # GIFs can't have audio settings
-    #      Show progress but don't show other logs - force output file overwrite                                           These quality settings should be good enough, TODO: parameters for them
-    ffmpeg -stats -loglevel "error" -ss ${START} -y -t ${DURATION} -i "${INPUT}" -s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} ${AUDIO_SETTINGS} -b:v "${BITRATE}" -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+    #              Show progress but don't show other logs, force output file overwrite
+    FFMPEG="ffmpeg -stats -loglevel error -ss ${START} -y -t ${DURATION} -i ${INPUT}"
+    if [ ${FORMAT} == "gif"  ] || [ -z ${AUDIO} ]; then
+        SIZE_X=$(echo $SIZE | cut -d"x" -f1) # scale x:-1 keeps the same aspect ratio
+        # GIF quality optimization from http://blog.pkh.me/p/21-high-quality-gif-with-ffmpeg.html
+        ffmpeg -loglevel "error" -i "$INPUT" -vf "fps=15,scale=${SIZE_X}:-1:flags=lanczos,palettegen" -y /tmp/palette.png
+        ${FFMPEG} -i /tmp/palette.png ${TRANSPOSE_CMD} -lavfi "fps=15,scale=${SIZE_X}:-1:flags=lanczos [x]; [x][1:v] paletteuse" "${OUTPUT}.${FORMAT}"
+    else
+#                                                           These quality settings should be good enough for video, TODO: parameters for them
+        ${FFMPEG}-s ${SIZE} ${TRANSPOSE_CMD} ${AUDIO_CMD} -c:v libvpx -b:v "${BITRATE}" -qmin 10 -qmax 42 "${OUTPUT}.${FORMAT}"
+    fi
   fi
 fi
